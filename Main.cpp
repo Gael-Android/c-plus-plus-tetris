@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <math.h>
 
 #include "colors.h"
 #include "Matrix.h"
@@ -200,6 +201,16 @@ int arrayScreen[ARRAY_DY][ARRAY_DX] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
+int getSideLength(int arr[]) {
+    int i = 0;
+    int counter = 0;
+    while (arr[i] != -1) {
+        counter++;
+        i++;
+    }
+    return sqrt(counter);
+}
+
 int main(int argc, char *argv[]) {
     char key;
     int top = 0, left = 8;
@@ -211,23 +222,22 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < MAX_BLK_TYPES; i++) {
         for (int j = 0; j < MAX_BLK_DEGREES; j++) {
-            setOfBlockObjects[i][j] = new Matrix(setOfBlockArrays[i + j], 3, 3);
+            int sideLength = getSideLength(setOfBlockArrays[i * MAX_BLK_DEGREES + j]);
+            setOfBlockObjects[i][j] = new Matrix(setOfBlockArrays[i * MAX_BLK_DEGREES + j], sideLength, sideLength);
         }
     }
-    Matrix *currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][0];
+    Matrix *currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][rand() % MAX_BLK_DEGREES];
     Matrix *tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
     Matrix *addedBlk = tempBackground->add(currBlk);
-    delete tempBackground;
 
     Matrix *oScreen = new Matrix(iScreen);
-    oScreen->paste(addedBlock, top, left);
-    delete addedBlock;
+    oScreen->paste(addedBlk, top, left);
     drawScreen(oScreen, SCREEN_DW);
-    delete oScreen;
 
-//    cout << "(nAlloc, nFree)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << endl;
+//    return 0;
 
-    while ((key = getch()) != 'q') {
+    while ((key = getch()) != 'q') { // 종료 키 q (게임 루프)
+        cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " " << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
         switch (key) {
             case 'a':
                 left--;
@@ -246,10 +256,14 @@ int main(int argc, char *argv[]) {
                 cout << "wrong key input" << endl;
         }
 
-        tempBlk = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
-        tempBlk2 = tempBlk->add(currBlk);
-        delete tempBlk;
-        if (tempBlk2->anyGreaterThan(1)) {
+        delete tempBackground;
+        tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
+        delete addedBlk;
+        addedBlk = tempBackground->add(currBlk);
+
+
+        // 충돌했으면,
+        if (addedBlk->anyGreaterThan(1)) {
             switch (key) {
                 case 'a':
                     left++;
@@ -259,44 +273,55 @@ int main(int argc, char *argv[]) {
                     break;
                 case 's':
                     top--;
-                    newBlockNeeded = true;
+                    newBlockNeeded = true; // 충돌했는데 키가 s 였으면, 새로운 블록 필요
                     break;
                 case 'w':
                     break;
                 case ' ':
                     break;
             }
-            delete tempBlk2;
-            tempBlk = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
-            tempBlk2 = tempBlk->add(currBlk);
-            delete tempBlk;
+            delete tempBackground;
+            tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
+            delete addedBlk;
+            addedBlk = tempBackground->add(currBlk);
         }
 
+        delete oScreen;
         oScreen = new Matrix(iScreen);
-        oScreen->paste(tempBlk2, top, left);
-        delete tempBlk2;
+        oScreen->paste(addedBlk, top, left);
         drawScreen(oScreen, SCREEN_DW);
-//        delete oScreen;
 
+        // 새로운 블록이 필요하다면,
         if (newBlockNeeded) {
+            delete iScreen;
             iScreen = new Matrix(oScreen);
             newBlockNeeded = false;
             top = 0;
             left = 8;
+            delete currBlk;
             currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][0];
 
-            tempBlk = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
-            tempBlk2 = tempBlk->add(currBlk);
+            delete tempBackground;
+            tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
+            delete addedBlk;
+            addedBlk = tempBackground->add(currBlk);
+            delete oScreen;
             oScreen = new Matrix(iScreen);
-            oScreen->paste(tempBlk2, top, left);
+            oScreen->paste(addedBlk, top, left);
             drawScreen(oScreen, SCREEN_DW);
         }
     }
 
     delete iScreen;
+    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
+//    for (int i = 0; i < MAX_BLK_TYPES; i++) {
+//        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
+//            delete setOfBlockObjects[i][j];
+//        }
+//    }
     delete currBlk;
-    delete tempBlk;
-    delete tempBlk2;
+    delete tempBackground;
+    delete addedBlk;
     delete oScreen;
 
     cout << "(nAlloc, nFree) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ")" << endl;
