@@ -142,7 +142,12 @@ void Matrix::paste(const Matrix &obj, int top, int left) {
 }
 
 Matrix *Matrix::add(const Matrix *obj) {
-  if ((dx != obj->dx) || (dy != obj->dy)) return NULL;
+  if ((dx != obj->dx) || (dy != obj->dy)) {
+      cout << "will return null!" << endl;
+      cout << "because dx : " << dx << " obj->dx : " << obj->dx << endl;
+      cout << "because dy : " << dy << " obj->dy : " << obj->dy << endl;
+      return NULL;
+  }
   Matrix *temp = new Matrix(dy, dx);
   for (int y = 0; y < dy; y++)
     for (int x = 0; x < dx; x++)

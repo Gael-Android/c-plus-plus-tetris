@@ -211,9 +211,14 @@ int getSideLength(int arr[]) {
     return sqrt(counter);
 }
 
+#define INIT_TOP 0
+#define INIT_LEFT 8
+
 int main(int argc, char *argv[]) {
+
+
     char key;
-    int top = 0, left = 8;
+    int top = INIT_TOP, left = INIT_LEFT;
     bool newBlockNeeded = false;
     srand((unsigned int) time(NULL));
 
@@ -230,6 +235,11 @@ int main(int argc, char *argv[]) {
     Matrix *tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
     Matrix *addedBlk = tempBackground->add(currBlk);
 
+    if (addedBlk == NULL) {
+        cout << "tempBackground.add fail" << endl;
+        return -1;
+    }
+
     Matrix *oScreen = new Matrix(iScreen);
     oScreen->paste(addedBlk, top, left);
     drawScreen(oScreen, SCREEN_DW);
@@ -237,7 +247,35 @@ int main(int argc, char *argv[]) {
 //    return 0;
 
     while ((key = getch()) != 'q') { // 종료 키 q (게임 루프)
-        cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " " << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
+        // 새로운 블록이 필요하다면,
+        if (newBlockNeeded) {
+            cout << "NEW BLOCK NEEDED!!!" << endl;
+
+            delete iScreen;
+            iScreen = new Matrix(oScreen);
+
+            cout << "iScreen View" << endl;
+            drawScreen(iScreen, SCREEN_DW);
+
+            cout << "oScreen View" << endl;
+            drawScreen(oScreen, SCREEN_DW);
+
+            cout << "iScreen is init by oScreen" << endl;
+
+            top = INIT_TOP;
+            left = INIT_LEFT;
+            currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][rand() % MAX_BLK_DEGREES];
+
+            cout << "new currBlk is setted" << endl;
+            newBlockNeeded = false;
+        }
+
+
+        // 디버깅용 메모리 추적
+        cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " "
+             << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
+
+        // 입력 처리
         switch (key) {
             case 'a':
                 left--;
@@ -256,14 +294,34 @@ int main(int argc, char *argv[]) {
                 cout << "wrong key input" << endl;
         }
 
+        // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬
         delete tempBackground;
         tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
         delete addedBlk;
         addedBlk = tempBackground->add(currBlk);
+        if (addedBlk == NULL) {
+            cout << "tempBackground.add fail" << endl;
+            return -1;
+        }
+        cout << "임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬" << endl;
+        cout << addedBlk << endl;
+        addedBlk->print();
+        cout << "출력!!!" << endl;
 
 
-        // 충돌했으면,
+        try {
+            cout << "설마 여기가 문제인가?" << endl;
+            addedBlk->print();
+            cout << addedBlk->anyGreaterThan(1) << endl;
+            cout << "아니라면 정상 실행" << endl;
+        } catch (const std::bad_alloc &) {
+            cout << "std::bad_alloc" << endl;
+            return -1;
+        }
+
+        // 충돌했으면, 이전으로 돌리고, 사후처리
         if (addedBlk->anyGreaterThan(1)) {
+            cout << "충돌발생!!!" << endl;
             switch (key) {
                 case 'a':
                     left++;
@@ -273,58 +331,51 @@ int main(int argc, char *argv[]) {
                     break;
                 case 's':
                     top--;
-                    newBlockNeeded = true; // 충돌했는데 키가 s 였으면, 새로운 블록 필요
+                    newBlockNeeded = true; // 새로운 블록 필요
                     break;
                 case 'w':
                     break;
                 case ' ':
                     break;
             }
+
+            // 사후처리 : 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬
             delete tempBackground;
             tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
             delete addedBlk;
             addedBlk = tempBackground->add(currBlk);
+            if (addedBlk == NULL) {
+                cout << "tempBackground.add fail" << endl;
+                return -1;
+            }
+            cout << "사후처리 : 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬" << endl;
         }
 
+        // outputScreen에 addedBlk를 반영해줌(붙여넣기)
+        cout << "추측 : 이곳에서 오류 발생하는 듯 " << endl;
         delete oScreen;
         oScreen = new Matrix(iScreen);
         oScreen->paste(addedBlk, top, left);
         drawScreen(oScreen, SCREEN_DW);
+        cout << "outputScreen에 addedBlk를 반영해줌(붙여넣기)" << endl;
 
-        // 새로운 블록이 필요하다면,
-        if (newBlockNeeded) {
-            delete iScreen;
-            iScreen = new Matrix(oScreen);
-            newBlockNeeded = false;
-            top = 0;
-            left = 8;
-            delete currBlk;
-            currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][0];
 
-            delete tempBackground;
-            tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
-            delete addedBlk;
-            addedBlk = tempBackground->add(currBlk);
-            delete oScreen;
-            oScreen = new Matrix(iScreen);
-            oScreen->paste(addedBlk, top, left);
-            drawScreen(oScreen, SCREEN_DW);
-        }
     }
 
-    delete iScreen;
-    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
-//    for (int i = 0; i < MAX_BLK_TYPES; i++) {
-//        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
-//            delete setOfBlockObjects[i][j];
-//        }
-//    }
-    delete currBlk;
-    delete tempBackground;
-    delete addedBlk;
-    delete oScreen;
+//    delete iScreen;
+//    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
+////    for (int i = 0; i < MAX_BLK_TYPES; i++) {
+////        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
+////            delete setOfBlockObjects[i][j];
+////        }
+////    }
+//    delete currBlk;
+//    delete tempBackground;
+//    delete addedBlk;
+//    delete oScreen;
 
-    cout << "(nAlloc, nFree) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ")" << endl;
+    cout << "(nAlloc, nFree) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
+         << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
     cout << "Program terminated!" << endl;
 
     return 0;
