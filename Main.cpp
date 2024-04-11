@@ -275,6 +275,10 @@ int main(int argc, char *argv[]) {
 
     Matrix *oScreen = new Matrix(iScreen);
     oScreen->paste(addedBlk, top, left);
+
+    cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " "
+         << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
+
     drawScreen(oScreen, SCREEN_DW);
 
     // (게임 루프)
@@ -402,18 +406,20 @@ int main(int argc, char *argv[]) {
     }
 
     delete iScreen;
-//    아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
-//    for (int i = 0; i < MAX_BLK_TYPES; i++) {
-//        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
-//            delete setOfBlockObjects[i][j];
-//        }
-//    }
+    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            delete setOfBlockObjects[i][j];
+        }
+    }
+    delete[] setOfBlockObjects;
+
     delete currBlk;
     delete tempBackground;
     delete addedBlk;
     delete oScreen;
 
-    cout << "(nAlloc, nFree) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
+    cout << "(nAlloc, nFree, alloc-free) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
          << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
     cout << "Program terminated!" << endl;
 
