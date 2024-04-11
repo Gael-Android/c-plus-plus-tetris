@@ -201,6 +201,40 @@ int arrayScreen[ARRAY_DY][ARRAY_DX] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
+void deleteFullLines(Matrix *gameMap, int top, int left, int blockHeight) {
+    gameMap->print();
+    cout << "top : " << top << endl;
+    cout << "left : " << left << endl;
+    cout << "blockHeight : " << blockHeight << endl;
+
+    int **arrayGameMap = gameMap->get_array();
+
+    cout << "탐색해야 하는 위로부터의 거리" << endl;
+    for (int i = top; i < top + blockHeight; ++i) {
+        if (i > SCREEN_DY - 1) {
+            break;
+        }
+        cout << i << endl;
+
+        bool isFull = true;
+        for (int j = 0; j < ARRAY_DX; ++j) {
+            cout << arrayGameMap[i][j] << " ";
+            if (arrayGameMap[i][j] == 0) {
+                isFull = false;
+            }
+        }
+        cout << endl << "isFull? " << isFull << endl;
+
+        if (isFull) {
+            Matrix *tempBackground = gameMap->clip(0, 0, i, ARRAY_DX);
+//            tempBackground->print();
+            gameMap->paste(tempBackground, 1, 0);
+            delete tempBackground;
+//            gameMap->print();
+        }
+    }
+}
+
 int getSideLength(int arr[]) {
     int i = 0;
     int counter = 0;
@@ -215,25 +249,13 @@ int getSideLength(int arr[]) {
 #define INIT_LEFT 8
 
 int main(int argc, char *argv[]) {
-//    Matrix A(3,3,10);
-//    Matrix B(3,3,5);
-//
-//    cout << A << endl;
-//    cout << B << endl;
-//
-//    Matrix C = A + B;
-//    cout << A + B << endl;
-//
-//
-//    return 0;
-
     char key;
     int top = INIT_TOP, left = INIT_LEFT;
-    int blockType = 0;
+    int blockType;
     int idxBlockDegree = 0;
-    bool dropFlag = false;
-
     bool newBlockNeeded = false;
+
+
     srand((unsigned int) time(NULL));
 
     Matrix *iScreen = new Matrix((int *) arrayScreen, ARRAY_DY, ARRAY_DX);
@@ -264,6 +286,8 @@ int main(int argc, char *argv[]) {
             delete iScreen;
             iScreen = new Matrix(oScreen);
 
+            deleteFullLines(iScreen, top, left, currBlk->get_dy());
+
             top = INIT_TOP;
             left = INIT_LEFT;
 
@@ -272,7 +296,6 @@ int main(int argc, char *argv[]) {
 
             newBlockNeeded = false;
         }
-
 
         // 디버깅용 메모리 추적
         cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " "
@@ -316,14 +339,13 @@ int main(int argc, char *argv[]) {
                     delete addedBlk;
                     addedBlk = tempBackground->add(currBlk);
 
-
                 } while (!addedBlk->anyGreaterThan(1)); // 충돌체크
                 break;
             default:
                 cout << "wrong key input" << endl;
         }
 
-        // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬, 더하고 생각하기
+        // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬, 허락보다 용서가 쉽다
         delete tempBackground;
         tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
         delete addedBlk;
