@@ -215,10 +215,23 @@ int getSideLength(int arr[]) {
 #define INIT_LEFT 8
 
 int main(int argc, char *argv[]) {
+//    Matrix A(3,3,10);
+//    Matrix B(3,3,5);
+//
+//    cout << A << endl;
+//    cout << B << endl;
+//
+//    Matrix C = A + B;
+//    cout << A + B << endl;
+//
+//
+//    return 0;
+
     char key;
     int top = INIT_TOP, left = INIT_LEFT;
     int blockType = 0;
     int idxBlockDegree = 0;
+    bool dropFlag = false;
 
     bool newBlockNeeded = false;
     srand((unsigned int) time(NULL));
@@ -238,18 +251,12 @@ int main(int argc, char *argv[]) {
     Matrix *tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
     Matrix *addedBlk = tempBackground->add(currBlk);
 
-    if (addedBlk == NULL) {
-        cout << "tempBackground.add fail" << endl;
-        return -1;
-    }
-
     Matrix *oScreen = new Matrix(iScreen);
     oScreen->paste(addedBlk, top, left);
     drawScreen(oScreen, SCREEN_DW);
 
-//    return 0;
-
-    while ((key = getch()) != 'q') { // 종료 키 q (게임 루프)
+    // (게임 루프)
+    while ((key = getch()) != 'q') { // 종료 키 q
         // 새로운 블록이 필요하다면,
         if (newBlockNeeded) {
             cout << "NEW BLOCK NEEDED!!!" << endl;
@@ -257,21 +264,12 @@ int main(int argc, char *argv[]) {
             delete iScreen;
             iScreen = new Matrix(oScreen);
 
-            cout << "iScreen View" << endl;
-            drawScreen(iScreen, SCREEN_DW);
-
-            cout << "oScreen View" << endl;
-            drawScreen(oScreen, SCREEN_DW);
-
-            cout << "iScreen is init by oScreen" << endl;
-
             top = INIT_TOP;
             left = INIT_LEFT;
 
             blockType = rand() % MAX_BLK_TYPES;
             currBlk = setOfBlockObjects[blockType][idxBlockDegree];
 
-            cout << "new currBlk is setted" << endl;
             newBlockNeeded = false;
         }
 
@@ -308,37 +306,30 @@ int main(int argc, char *argv[]) {
                 currBlk = setOfBlockObjects[blockType][idxBlockDegree];
                 break;
             case ' ':
+                do {
+                    // 내려감
+                    top++;
+
+                    // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬, 더하고 생각하기
+                    delete tempBackground;
+                    tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
+                    delete addedBlk;
+                    addedBlk = tempBackground->add(currBlk);
+
+
+                } while (!addedBlk->anyGreaterThan(1)); // 충돌체크
                 break;
             default:
                 cout << "wrong key input" << endl;
         }
 
-        // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬
+        // 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬, 더하고 생각하기
         delete tempBackground;
         tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
         delete addedBlk;
         addedBlk = tempBackground->add(currBlk);
-        if (addedBlk == NULL) {
-            cout << "tempBackground.add fail" << endl;
-            return -1;
-        }
-        cout << "임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬" << endl;
-        cout << addedBlk << endl;
-        addedBlk->print();
-        cout << "출력!!!" << endl;
 
-
-        try {
-            cout << "설마 여기가 문제인가?" << endl;
-            addedBlk->print();
-            cout << addedBlk->anyGreaterThan(1) << endl;
-            cout << "아니라면 정상 실행" << endl;
-        } catch (const std::bad_alloc &) {
-            cout << "std::bad_alloc" << endl;
-            return -1;
-        }
-
-        // 충돌했으면, 이전으로 돌리고, 사후처리
+        // 충돌처리, 이전으로 돌리고, 사후처리
         if (addedBlk->anyGreaterThan(1)) {
             cout << "충돌발생!!!" << endl;
             switch (key) {
@@ -369,6 +360,8 @@ int main(int argc, char *argv[]) {
                 case 'w':
                     break;
                 case ' ':
+                    top--;
+                    newBlockNeeded = true; // 새로운 블록 필요
                     break;
             }
 
@@ -377,22 +370,13 @@ int main(int argc, char *argv[]) {
             tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
             delete addedBlk;
             addedBlk = tempBackground->add(currBlk);
-            if (addedBlk == NULL) {
-                cout << "tempBackground.add fail" << endl;
-                return -1;
-            }
-            cout << "사후처리 : 임시 백그라운드에 현재 블럭을 더해서 addedBlk를 만듬" << endl;
         }
 
-        // outputScreen에 addedBlk를 반영해줌(붙여넣기)
-        cout << "추측 : 이곳에서 오류 발생하는 듯 " << endl;
+        // 화면 그려주기
         delete oScreen;
         oScreen = new Matrix(iScreen);
         oScreen->paste(addedBlk, top, left);
         drawScreen(oScreen, SCREEN_DW);
-        cout << "outputScreen에 addedBlk를 반영해줌(붙여넣기)" << endl;
-
-
     }
 
     delete iScreen;

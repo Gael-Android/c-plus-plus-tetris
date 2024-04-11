@@ -32,7 +32,7 @@ public:
   void paste(const Matrix &obj, int top, int left);
   Matrix *add(const Matrix *obj);
   friend const Matrix operator+(const Matrix& m1, const Matrix& m2);
-  //const Matrix operator+(const Matrix& m2) const;
+//  const Matrix operator+(const Matrix& m2) const;
   int sum();
   void mulc(int coef);
   Matrix *int2bool();
