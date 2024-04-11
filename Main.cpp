@@ -215,10 +215,11 @@ int getSideLength(int arr[]) {
 #define INIT_LEFT 8
 
 int main(int argc, char *argv[]) {
-
-
     char key;
     int top = INIT_TOP, left = INIT_LEFT;
+    int blockType = 0;
+    int idxBlockDegree = 0;
+
     bool newBlockNeeded = false;
     srand((unsigned int) time(NULL));
 
@@ -231,7 +232,9 @@ int main(int argc, char *argv[]) {
             setOfBlockObjects[i][j] = new Matrix(setOfBlockArrays[i * MAX_BLK_DEGREES + j], sideLength, sideLength);
         }
     }
-    Matrix *currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][rand() % MAX_BLK_DEGREES];
+
+    blockType = rand() % MAX_BLK_TYPES;
+    Matrix *currBlk = setOfBlockObjects[blockType][idxBlockDegree];
     Matrix *tempBackground = iScreen->clip(top, left, top + currBlk->get_dy(), left + currBlk->get_dx());
     Matrix *addedBlk = tempBackground->add(currBlk);
 
@@ -264,7 +267,9 @@ int main(int argc, char *argv[]) {
 
             top = INIT_TOP;
             left = INIT_LEFT;
-            currBlk = setOfBlockObjects[rand() % MAX_BLK_TYPES][rand() % MAX_BLK_DEGREES];
+
+            blockType = rand() % MAX_BLK_TYPES;
+            currBlk = setOfBlockObjects[blockType][idxBlockDegree];
 
             cout << "new currBlk is setted" << endl;
             newBlockNeeded = false;
@@ -287,6 +292,20 @@ int main(int argc, char *argv[]) {
                 top++;
                 break;
             case 'w':
+                break;
+            case 'p':
+                idxBlockDegree++;
+                if (idxBlockDegree > MAX_BLK_DEGREES - 1) {
+                    idxBlockDegree = 0;
+                }
+                currBlk = setOfBlockObjects[blockType][idxBlockDegree];
+                break;
+            case 'l':
+                idxBlockDegree--;
+                if (idxBlockDegree < 0) {
+                    idxBlockDegree = MAX_BLK_DEGREES - 1;
+                }
+                currBlk = setOfBlockObjects[blockType][idxBlockDegree];
                 break;
             case ' ':
                 break;
@@ -333,6 +352,20 @@ int main(int argc, char *argv[]) {
                     top--;
                     newBlockNeeded = true; // 새로운 블록 필요
                     break;
+                case 'p':
+                    idxBlockDegree--;
+                    if (idxBlockDegree < 0) {
+                        idxBlockDegree = MAX_BLK_DEGREES - 1;
+                    }
+                    currBlk = setOfBlockObjects[blockType][idxBlockDegree];
+                    break;
+                case 'l':
+                    idxBlockDegree++;
+                    if (idxBlockDegree > MAX_BLK_DEGREES - 1) {
+                        idxBlockDegree = 0;
+                    }
+                    currBlk = setOfBlockObjects[blockType][idxBlockDegree];
+                    break;
                 case 'w':
                     break;
                 case ' ':
@@ -362,17 +395,17 @@ int main(int argc, char *argv[]) {
 
     }
 
-//    delete iScreen;
-//    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
-////    for (int i = 0; i < MAX_BLK_TYPES; i++) {
-////        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
-////            delete setOfBlockObjects[i][j];
-////        }
-////    }
-//    delete currBlk;
-//    delete tempBackground;
-//    delete addedBlk;
-//    delete oScreen;
+    delete iScreen;
+//    아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
+//    for (int i = 0; i < MAX_BLK_TYPES; i++) {
+//        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
+//            delete setOfBlockObjects[i][j];
+//        }
+//    }
+    delete currBlk;
+    delete tempBackground;
+    delete addedBlk;
+    delete oScreen;
 
     cout << "(nAlloc, nFree) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
          << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
