@@ -202,29 +202,28 @@ int arrayScreen[ARRAY_DY][ARRAY_DX] = {
 };
 
 void deleteFullLines(Matrix *gameMap, int top, int left, int blockHeight) {
-    gameMap->print();
-    cout << "top : " << top << endl;
-    cout << "left : " << left << endl;
-    cout << "blockHeight : " << blockHeight << endl;
+//    gameMap->print();
+//    cout << "top : " << top << endl;
+//    cout << "left : " << left << endl;
+//    cout << "blockHeight : " << blockHeight << endl;
 
     int **arrayGameMap = gameMap->get_array();
 
-    cout << "탐색해야 하는 위로부터의 거리" << endl;
+//    cout << "탐색해야 하는 위로부터의 거리" << endl;
     for (int i = top; i < top + blockHeight; ++i) {
         if (i > SCREEN_DY - 1) {
             break;
         }
-        cout << i << endl;
+//        cout << i << endl;
 
         bool isFull = true;
         for (int j = 0; j < ARRAY_DX; ++j) {
-            cout << arrayGameMap[i][j] << " ";
+//            cout << arrayGameMap[i][j] << " ";
             if (arrayGameMap[i][j] == 0) {
                 isFull = false;
             }
         }
-        cout << endl << "isFull? " << isFull << endl;
-
+//        cout << endl << "isFull? " << isFull << endl;
         if (isFull) {
             Matrix *tempBackground = gameMap->clip(0, 0, i, ARRAY_DX);
 //            tempBackground->print();
@@ -232,6 +231,26 @@ void deleteFullLines(Matrix *gameMap, int top, int left, int blockHeight) {
             delete tempBackground;
 //            gameMap->print();
         }
+    }
+}
+
+bool checkIsTouchedTop(Matrix *gameMap) {
+    int **arrayGameMap = gameMap->get_array();
+
+    bool isTopOccupied = false;
+    for (int i = SCREEN_DW; i < SCREEN_DX + SCREEN_DW; ++i) {
+//        cout << arrayGameMap[0][i] << " ";
+        if (arrayGameMap[0][i] == 1) {
+            isTopOccupied = true;
+            break;
+        }
+    }
+//    cout << endl;
+    if (isTopOccupied) {
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -254,7 +273,6 @@ int main(int argc, char *argv[]) {
     int blockType;
     int idxBlockDegree = 0;
     bool newBlockNeeded = false;
-
 
     srand((unsigned int) time(NULL));
 
@@ -285,12 +303,16 @@ int main(int argc, char *argv[]) {
     while ((key = getch()) != 'q') { // 종료 키 q
         // 새로운 블록이 필요하다면,
         if (newBlockNeeded) {
-            cout << "NEW BLOCK NEEDED!!!" << endl;
+//            cout << "NEW BLOCK NEEDED!!!" << endl;
 
             delete iScreen;
             iScreen = new Matrix(oScreen);
 
             deleteFullLines(iScreen, top, left, currBlk->get_dy());
+            if(checkIsTouchedTop(iScreen)) {
+                cout << "GAME OVER" << endl;
+                return 0;
+            }
 
             top = INIT_TOP;
             left = INIT_LEFT;
@@ -302,8 +324,8 @@ int main(int argc, char *argv[]) {
         }
 
         // 디버깅용 메모리 추적
-        cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " "
-             << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
+//        cout << "(nAlloc, nFree, diff)" << Matrix::get_nAlloc() << " " << Matrix::get_nFree() << " "
+//             << Matrix::get_nAlloc() - Matrix::get_nFree() << endl;
 
         // 입력 처리
         switch (key) {
@@ -358,6 +380,9 @@ int main(int argc, char *argv[]) {
         // 충돌처리, 이전으로 돌리고, 사후처리
         if (addedBlk->anyGreaterThan(1)) {
             cout << "충돌발생!!!" << endl;
+            cout << "top : " << top << endl;
+            cout << "left : " << left << endl;
+
             switch (key) {
                 case 'a':
                     left++;
@@ -412,7 +437,6 @@ int main(int argc, char *argv[]) {
             delete setOfBlockObjects[i][j];
         }
     }
-    delete[] setOfBlockObjects;
 
     delete currBlk;
     delete tempBackground;
