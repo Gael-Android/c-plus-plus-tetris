@@ -268,6 +268,26 @@ int getSideLength(int arr[]) {
 #define INIT_LEFT 8
 
 int main(int argc, char *argv[]) {
+//    Matrix* list[7][4];
+//    for (int i = 0; i < 7; ++i) {
+//        for (int j = 0; j < 4; ++j) {
+//            list[i][j] = new Matrix();
+//        }
+//    }
+//
+//    for (int i = 0; i < 7; ++i) {
+//        for (int j = 0; j < 4; ++j) {
+//            delete list[i][j];
+//        }
+//    }
+//
+//    cout << "(nAlloc, nFree, alloc-free) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
+//         << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
+//    cout << "Program terminated!" << endl;
+//
+//    return 0;
+
+
     char key;
     int top = INIT_TOP, left = INIT_LEFT;
     int blockType;
@@ -277,7 +297,7 @@ int main(int argc, char *argv[]) {
     srand((unsigned int) time(NULL));
 
     Matrix *iScreen = new Matrix((int *) arrayScreen, ARRAY_DY, ARRAY_DX);
-    Matrix *setOfBlockObjects[7][4];
+    Matrix *setOfBlockObjects[MAX_BLK_TYPES][MAX_BLK_DEGREES];
 
     for (int i = 0; i < MAX_BLK_TYPES; i++) {
         for (int j = 0; j < MAX_BLK_DEGREES; j++) {
@@ -285,6 +305,20 @@ int main(int argc, char *argv[]) {
             setOfBlockObjects[i][j] = new Matrix(setOfBlockArrays[i * MAX_BLK_DEGREES + j], sideLength, sideLength);
         }
     }
+
+//    for (int i = 0; i < MAX_BLK_TYPES; ++i) {
+//        for (int j = 0; j < MAX_BLK_DEGREES; ++j) {
+//            delete setOfBlockObjects[i][j];
+//        }
+//    }
+//    delete iScreen;
+//
+//    cout << "(nAlloc, nFree, alloc-free) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
+//         << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
+//    cout << "Program terminated!" << endl;
+//
+//    return 0;
+
 
     blockType = rand() % MAX_BLK_TYPES;
     Matrix *currBlk = setOfBlockObjects[blockType][idxBlockDegree];
@@ -431,17 +465,26 @@ int main(int argc, char *argv[]) {
     }
 
     delete iScreen;
-    // 아래 코드가 malloc: *** error for object 0x18: pointer being freed was not allocated 를 유발함
-    for (int i = 0; i < 7; ++i) {
-        for (int j = 0; j < 4; ++j) {
+//    delete currBlk; // 이거 없애면 됨. 왜 그냥 참조를 delete하려 한거야
+    delete tempBackground;
+    delete addedBlk;
+    delete oScreen;
+
+
+//    for (int i = 0; i < MAX_BLK_TYPES; ++i) {
+//        for (int j = 0; j < MAX_BLK_DEGREES; ++j) {
+//            cout << "i : " << i << ", j : " << j << endl;
+//            setOfBlockObjects[i][j]->print();
+//            cout << endl;
+//        }
+//    }
+
+    for (int i = 0; i < MAX_BLK_TYPES; i++) {
+        for (int j = 0; j < MAX_BLK_DEGREES; j++) {
             delete setOfBlockObjects[i][j];
         }
     }
 
-    delete currBlk;
-    delete tempBackground;
-    delete addedBlk;
-    delete oScreen;
 
     cout << "(nAlloc, nFree, alloc-free) = (" << Matrix::get_nAlloc() << ',' << Matrix::get_nFree() << ","
          << Matrix::get_nAlloc() - Matrix::get_nFree() << ")" << endl;
